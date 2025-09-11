@@ -14,7 +14,7 @@ LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "f1155d43889c61b23f706e9e
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# 接收 LINE webhook 的入口
+# ✅ webhook 路由：LINE 平台會呼叫這裡
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers['X-Line-Signature']
@@ -27,22 +27,35 @@ def callback():
 
     return 'OK'
 
-# 處理文字訊息事件
+# ✅ 訊息處理邏輯：放這裡！
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     msg = event.message.text.strip()
 
-    # 範例：收到 "/交易 2330" 指令
-    if msg.startswith("/交易"):
-        stock_id = msg.replace("/交易", "").strip()
-        reply = f"📈 準備執行 {stock_id} 的交易流程..."
-        # 你可以在這裡呼叫 monitor_and_trade(stock_id)
-    else:
-        reply = f"你說的是：{msg}"
+    # Step 1：先回覆使用者，避免 webhook timeout
+    line_bot_api.reply_message(
+        event.reply_token,
+        TextSendMessage(text="⏳ 指令已接收，正在處理中...")
+    )
 
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply))
+    # Step 2：在背景執行交易邏輯
+    def background_task():
+        if msg.startswith("/交易"):
+            stock_id = msg.replace("/交易", "").strip()
+            result = monitor_and_trade(stock_id)  # 你自己的交易主控函式
+            line_bot_api.push_message(
+                event.source.user_id,
+                TextSendMessage(text=f"✅ 交易完成：{result}")
+            )
+        else:
+            line_bot_api.push_message(
+                event.source.user_id,
+                TextSendMessage(text=f"📩 你說的是：{msg}")
+            )
 
-# Render 雲端啟動用
+    threading.Thread(target=background_task).start()
+
+# ✅ Render 雲端啟動用
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
