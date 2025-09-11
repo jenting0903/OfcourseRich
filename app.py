@@ -1,10 +1,14 @@
 from flask import Flask, request, abort
-from linebot import LineBotApi, WebhookHandler
-from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.v3 import WebhookHandler
+from linebot.v3.exceptions import InvalidSignatureError
+from linebot.v3.messaging import (
+    Configuration, ApiClient, MessagingApi,
+    ReplyMessageRequest, TextMessage, PushMessageRequest
+)
+from linebot.v3.webhooks import MessageEvent, TextMessageContent
+import threading
 import os
 
-# 建立 Flask 應用
 app = Flask(__name__)
 
 # 設定 LINE 憑證（請改成你自己的）
@@ -14,10 +18,10 @@ LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "f1155d43889c61b23f706e9e
 line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# ✅ webhook 路由：LINE 平台會呼叫這裡
+# ✅ LINE webhook 路由
 @app.route("/callback", methods=['POST'])
 def callback():
-    signature = request.headers['X-Line-Signature']
+    signature = request.headers.get("X-Line-Signature", "")
     body = request.get_data(as_text=True)
 
     try:
@@ -25,32 +29,41 @@ def callback():
     except InvalidSignatureError:
         abort(400)
 
-    return 'OK'
+    return "OK"
 
-# ✅ 訊息處理邏輯：放這裡！
-@handler.add(MessageEvent, message=TextMessage)
+# ✅ 訊息處理邏輯（先回覆，再執行）
+@handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
+    user_id = event.source.user_id
     msg = event.message.text.strip()
 
-    # Step 1：先回覆使用者，避免 webhook timeout
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text="⏳ 指令已接收，正在處理中...")
-    )
-
-    # Step 2：在背景執行交易邏輯
-    def background_task():
-        if msg.startswith("/交易"):
-            stock_id = msg.replace("/交易", "").strip()
-            result = monitor_and_trade(stock_id)  # 你自己的交易主控函式
-            line_bot_api.push_message(
-                event.source.user_id,
-                TextSendMessage(text=f"✅ 交易完成：{result}")
+    # Step 1：先回覆，避免 webhook timeout
+    with ApiClient(configuration) as api_client:
+        messaging_api = MessagingApi(api_client)
+        messaging_api.reply_message_with_http_info(
+            ReplyMessageRequest(
+                reply_token=event.reply_token,
+                messages=[TextMessage(text="⏳ 指令已接收，正在處理中...")]
             )
-        else:
-            line_bot_api.push_message(
-                event.source.user_id,
-                TextSendMessage(text=f"📩 你說的是：{msg}")
+        )
+
+    # Step 2：背景執行交易邏輯
+    def background_task():
+        with ApiClient(configuration) as api_client:
+            messaging_api = MessagingApi(api_client)
+
+            if msg.startswith("/交易"):
+                stock_id = msg.replace("/交易", "").strip()
+                result = monitor_and_trade(stock_id)  # 你自己的交易函式
+                reply = f"✅ 交易完成：{result}"
+            else:
+                reply = f"📩 你說的是：{msg}"
+
+            messaging_api.push_message_with_http_info(
+                PushMessageRequest(
+                    to=user_id,
+                    messages=[TextMessage(text=reply)]
+                )
             )
 
     threading.Thread(target=background_task).start()
