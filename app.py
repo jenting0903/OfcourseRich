@@ -12,8 +12,8 @@ import os
 app = Flask(__name__)
 
 # ✅ LINE 憑證（Render 上用環境變數設定）
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
-LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
+LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
+LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
