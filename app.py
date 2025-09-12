@@ -11,14 +11,14 @@ import os
 
 app = Flask(__name__)
 
-# 設定 LINE 憑證（請改成你自己的）
-LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "P24zhpGoQrbPeuAz0InzmLEutrRhd7qPMF1WntXjtxvtWFVV1KR+SPx9KTeqoZ7GW2gI9ztN43WQ5gaFcwSGpJhwRyBuqEuVAYXHU4iVqZ/mCrjJZOAgorsCre5OIvlOTokS5zbnkLD7OtNZ37LZXAdB04t89/1O/w1cDnyilFU=")
-LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "f1155d43889c61b23f706e9ebbb71565")
+# ✅ LINE 憑證（Render 上用環境變數設定）
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN")
+LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET")
 
-line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# ✅ LINE webhook 路由
+# ✅ webhook 路由
 @app.route("/callback", methods=['POST'])
 def callback():
     signature = request.headers.get("X-Line-Signature", "")
@@ -47,7 +47,7 @@ def handle_message(event):
             )
         )
 
-    # Step 2：背景執行交易邏輯
+    # Step 2：背景執行邏輯
     def background_task():
         with ApiClient(configuration) as api_client:
             messaging_api = MessagingApi(api_client)
