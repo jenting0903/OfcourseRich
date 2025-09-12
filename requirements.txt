@@ -18,7 +18,7 @@ filelock==3.19.1
 flake8==7.3.0
 Flask==3.1.2
 frozenlist==1.7.0
-fubon_neo @ file:///C:/Users/user/Downloads/%E5%AF%8C%E9%82%A6API%20test/fubon_neo-2.2.4-cp37-abi3-win_amd64.whl#sha256=091ff026921964664d751086a5b23fb3d467b3f30d757c88ea3d0b1f982a4e24
+fubon_neo==2.2.4
 future==1.0.0
 gunicorn==23.0.0
 identify==2.6.13
@@ -49,7 +49,7 @@ Pygments==2.19.2
 PyMySQL==1.1.2
 pytest==8.4.1
 pytest-cov==6.2.1
-python-dateutil==2.9.0.post0
+python-dateutil==2.8.2
 pytz==2025.2
 PyYAML==6.0.2
 requests==2.32.5
