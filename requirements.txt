@@ -20,7 +20,7 @@ Flask==3.1.2
 frozenlist==1.7.0
 fubon_neo @ https://github.com/jenting0903/OfcourseRich/raw/refs/heads/main/fubon_neo-2.2.4-cp37-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 future==1.0.0
-gunicorn==23.0.0
+gunicorn==21.2.0
 identify==2.6.13
 idna==3.10
 iniconfig==2.1.0
