@@ -6,6 +6,7 @@ from linebot.v3.messaging import (
     ReplyMessageRequest, TextMessage, PushMessageRequest
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
+from fubon_api import FubonAdventure
 import threading
 import os
 
@@ -17,6 +18,23 @@ LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
+def handle_account_query(user_id):
+    try:
+        user_token = get_token_for_user(user_id)
+        fubon = FubonAdventure(token=user_token)
+        info = fubon.query_account()
+
+        return (
+            "🧭 冒險者的銀袋已開啟\n"
+            f"💼 銀袋餘額：${info['balance']:,}\n"
+            f"📦 持有寶物：${info['portfolio_value']:,}\n"
+            f"🔥 損益波動：${info['unrealized_pl']:,}\n"
+            "\n⚔️ 若要進行交易，請輸入：/交易 [股票代碼]"
+        )
+    except Exception as e:
+        print("帳務查詢失敗：", e)
+        return "⚠️ 銀袋被封印了，可能是魔法失效了，請稍後再試。"
 
 # ✅ webhook 路由
 @app.route("/callback", methods=["POST"])
@@ -56,6 +74,8 @@ def handle_message(event):
                 stock_id = msg.replace("/交易", "").strip()
                 result = monitor_and_trade(stock_id)  # 你自己的交易函式
                 reply = f"✅ 交易完成：{result}"
+            elif msg == "/查詢帳務":
+                reply = handle_account_query(user_id)
             else:
                 reply = f"📩 你說的是：{msg}"
 
