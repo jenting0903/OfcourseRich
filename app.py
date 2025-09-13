@@ -21,8 +21,7 @@ handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
 def handle_account_query(user_id):
     try:
-        user_token = get_token_for_user(user_id)
-        fubon = FubonAdventure(token=user_token)
+        fubon = FubonAdventure()
         info = fubon.query_account()
 
         return (
