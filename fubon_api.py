@@ -6,6 +6,7 @@ class FubonAdventure:
         print("🧙‍♂️ 初始化 FubonAdventure 中...")
         self.sdk = FubonSDK()
         try:
+            print("🔐 嘗試登入中...")
             login_result = self.sdk.login(
                 user_id=os.environ["FUBON_USER_ID"],
                 password=os.environ["FUBON_PASSWORD"],
@@ -17,6 +18,7 @@ class FubonAdventure:
         except Exception as e:
             print("❌ 登入失敗：", e)
             self.account = None
+
 
     def query_account(self):
         if not self.account:
