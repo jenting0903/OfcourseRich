@@ -6,18 +6,16 @@ class FubonAdventure:
         print("🧙‍♂️ 初始化 FubonAdventure 中...")
         self.sdk = FubonSDK()
         try:
-            print("🔐 嘗試登入中...")
-            login_result = self.sdk.login(
-                user_id=os.environ["FUBON_USER_ID"],
-                password=os.environ["FUBON_PASSWORD"],
-                cert_path=os.environ["FUBON_CERT_PATH"],
-                cert_password=os.environ["FUBON_CERT_PASSWORD"]
+            login_result = sdk.login(
+            os.environ["FUBON_USER_ID"],
+            os.environ["FUBON_PASSWORD"],
+            os.environ["FUBON_CERT_PATH"],
+            os.environ["FUBON_CERT_PASSWORD"]
             )
-            print("✅ 登入成功，回傳：", login_result)
-            self.account = login_result.data[0]
+        except KeyError as e:
+            print(f"❌ 環境變數缺失：{e}")
         except Exception as e:
-            print("❌ 登入失敗：", e)
-            self.account = None
+            print(f"❌ 登入失敗：{e}")
 
 
     def query_account(self):
