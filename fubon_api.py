@@ -24,7 +24,8 @@ class FubonAdventure:
             print("⚠️ 帳戶為空，無法查詢")
             return None
         try:
-            summary = self.sdk.account.get_summary(self.account)
+            print("📦 呼叫 get_summary() 中...")
+            summary = self.sdk.get_summary(self.account)
             print("📦 帳務摘要：", summary)
             return {
                 "balance": summary["available_cash"],
@@ -34,6 +35,8 @@ class FubonAdventure:
         except Exception as e:
             print("❌ 查詢帳務失敗：", e)
             return None
+
+
 
 
 #git add .
