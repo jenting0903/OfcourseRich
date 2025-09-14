@@ -19,12 +19,14 @@ LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
+# ✅ 財務查詢邏輯
 def handle_account_query(user_id):
     try:
+        print(f"🧙‍♂️ 正在查詢帳務：使用者 {user_id}")
         fubon = FubonAdventure()
         info = fubon.query_account()
         if not info:
-            return "🔶 銷樣被封印了，可能是產生失效了，請稍後再試。🔶"
+            return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"
 
         return (
             "🧭 冒險者任庭的財務背包已開啟...\n"
@@ -35,7 +37,16 @@ def handle_account_query(user_id):
         )
     except Exception as e:
         print("⚠️ 財務查詢錯誤：", e)
-        return "🔶 銷樣被封印了，可能是產生失效了，請稍後再試。🔶"
+        return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"
+
+# ✅ 推送訊息封裝
+def send_line_message(user_id, text):
+    with ApiClient(configuration) as api_client:
+        messaging_api = MessagingApi(api_client)
+        message = TextMessage(text=text)
+        request = PushMessageRequest(to=user_id, messages=[message])
+        messaging_api.push_message_with_http_info(request)
+        print(f"📨 已推送訊息給 {user_id}：{text}")
 
 # ✅ webhook 路由
 @app.route("/callback", methods=["POST"])
@@ -68,9 +79,7 @@ def handle_message(event):
 
     # Step 2：背景執行邏輯
     def background_task(user_id, msg):
-        with ApiClient(configuration) as api_client:
-            messaging_api = MessagingApi(api_client)
-
+        print(f"🧙‍♂️ 背景任務啟動：{user_id} 說了 {msg}")
         if msg.startswith("/交易"):
             stock_id = msg.replace("/交易", "").strip()
             result = monitor_and_trade(stock_id)  # 你自己的交易函式
@@ -80,17 +89,9 @@ def handle_message(event):
         else:
             reply = f"📩 你說的是：{msg}"
 
-        messaging_api.push_message_with_http_info(
-            PushMessageRequest(
-                to=user_id,
-                messages=[TextMessage(text=reply)]
-            )
-        )
-
+        send_line_message(user_id, reply)
 
     threading.Thread(target=background_task, args=(user_id, msg)).start()
-
-
 
 # ✅ Render 雲端啟動用
 if __name__ == "__main__":
