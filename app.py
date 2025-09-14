@@ -32,7 +32,6 @@ def handle_account_query(user_id):
             "\n⚔️ 若要進行交易，請輸入：/交易 [股票代碼]"
         )
     except Exception as e:
-        print("帳務查詢失敗：", e)
         return "⚠️ 銀袋被封印了，可能是魔法失效了，請稍後再試。"
 
 # ✅ webhook 路由

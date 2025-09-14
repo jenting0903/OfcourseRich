@@ -1,14 +1,16 @@
+import os
 from fubon_neo.sdk import FubonSDK
 
 class FubonAdventure:
-    def __init__(self, token):
+    def __init__(self):
         self.sdk = FubonSDK()
-        self.account = self.sdk.login(
-            user_id=token["id"],
-            password=token["password"],
-            cert_path=token["cert_path"],
-            cert_password=token["cert_password"]
-        ).data[0]  # 假設你只用第一個帳戶
+        login_result = self.sdk.login(
+            user_id=os.environ["FUBON_USER_ID"],
+            password=os.environ["FUBON_PASSWORD"],
+            cert_path=os.environ["FUBON_CERT_PATH"],
+            cert_password=os.environ["FUBON_CERT_PASSWORD"]
+        )
+        self.account = login_result.data[0]
 
     def query_account(self):
         summary = self.sdk.account.get_summary(self.account)
