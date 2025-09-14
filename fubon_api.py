@@ -1,3 +1,6 @@
+from fubon_neo.sdk import FubonSDK
+
+
 class FubonAdventure:
     def __init__(self):
         print("🧙‍♂️ 初始化 FubonAdventure 中...")
