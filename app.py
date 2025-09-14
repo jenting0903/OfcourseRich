@@ -19,7 +19,7 @@ LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-def handle_account_query():
+def handle_account_query(user_id):
     try:
         fubon = FubonAdventure()
         info = fubon.query_account()
@@ -67,27 +67,30 @@ def handle_message(event):
         )
 
     # Step 2：背景執行邏輯
-    def background_task():
-        with ApiClient(configuration) as api_client:
-            messaging_api = MessagingApi(api_client)
+    def background_task(user_id, msg):
+    with ApiClient(configuration) as api_client:
+        messaging_api = MessagingApi(api_client)
 
-            if msg.startswith("/交易"):
-                stock_id = msg.replace("/交易", "").strip()
-                result = monitor_and_trade(stock_id)  # 你自己的交易函式
-                reply = f"✅ 交易完成：{result}"
-            elif msg == "/查詢帳務":
-                reply = handle_account_query(user_id)
-            else:
-                reply = f"📩 你說的是：{msg}"
+        if msg.startswith("/交易"):
+            stock_id = msg.replace("/交易", "").strip()
+            result = monitor_and_trade(stock_id)  # 你自己的交易函式
+            reply = f"✅ 交易完成：{result}"
+        elif msg == "/查詢帳務":
+            reply = handle_account_query(user_id)
+        else:
+            reply = f"📩 你說的是：{msg}"
 
-            messaging_api.push_message_with_http_info(
-                PushMessageRequest(
-                    to=user_id,
-                    messages=[TextMessage(text=reply)]
-                )
+        messaging_api.push_message_with_http_info(
+            PushMessageRequest(
+                to=user_id,
+                messages=[TextMessage(text=reply)]
             )
+        )
 
-    threading.Thread(target=background_task).start()
+
+    threading.Thread(target=background_task, args=(user_id, msg)).start()
+
+
 
 # ✅ Render 雲端啟動用
 if __name__ == "__main__":
