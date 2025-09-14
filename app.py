@@ -19,20 +19,23 @@ LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-def handle_account_query(user_id):
+def handle_account_query():
     try:
         fubon = FubonAdventure()
         info = fubon.query_account()
+        if not info:
+            return "🔶 銷樣被封印了，可能是產生失效了，請稍後再試。🔶"
 
         return (
-            "🧭 冒險者的銀袋已開啟\n"
-            f"💼 銀袋餘額：${info['balance']:,}\n"
-            f"📦 持有寶物：${info['portfolio_value']:,}\n"
-            f"🔥 損益波動：${info['unrealized_pl']:,}\n"
+            "🧭 冒險者任庭的財務背包已開啟...\n"
+            f"💼 銀袋餘額：${info['balance']:,} 金幣\n"
+            f"📦 持股倉庫總值：${info['portfolio_value']:,} 金幣\n"
+            f"🌪️ 損益風暴：{info['unrealized_pl']:,} 金幣波動\n"
             "\n⚔️ 若要進行交易，請輸入：/交易 [股票代碼]"
         )
     except Exception as e:
-        return "⚠️ 銀袋被封印了，可能是魔法失效了，請稍後再試。"
+        print("⚠️ 財務查詢錯誤：", e)
+        return "🔶 銷樣被封印了，可能是產生失效了，請稍後再試。🔶"
 
 # ✅ webhook 路由
 @app.route("/callback", methods=["POST"])
