@@ -29,12 +29,14 @@ def handle_account_query(user_id):
             return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"
 
         return (
-            "🧭 冒險者任庭的財務背包已開啟...\n"
-            f"💼 銀袋餘額：${info['balance']:,} 金幣\n"
-            f"📦 持股倉庫總值：${info['portfolio_value']:,} 金幣\n"
-            f"🌪️ 損益風暴：{info['unrealized_pl']:,} 金幣波動\n"
-            "\n⚔️ 若要進行交易，請輸入：/交易 [股票代碼]"
-        )
+            "🧭 冒險者任庭已成功連結財務神殿...\n"
+            "📜 銀行帳戶卷軸已展開：\n"
+            f"🏛️ 分行代號：{info['branch']}\n"
+            f"🪪 帳號編碼：{info['account']}\n"
+            f"💰 銀袋總額：{info['balance']:,} 金幣\n"
+            f"🪙 可動用資源：{info['available']:,} 金幣\n"
+            f"💱 幣別：{info['currency']}\n"
+                )
     except Exception as e:
         print("⚠️ 財務查詢錯誤：", e)
         return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"

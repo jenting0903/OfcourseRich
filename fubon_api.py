@@ -19,22 +19,30 @@ class FubonAdventure:
             print("❌ 登入失敗：", e)
             self.account = None
 
-    def query_account(self):
-        if not self.account:
-            print("⚠️ 帳戶為空，無法查詢")
+def query_account(self):
+    if not self.account:
+        print("⚠️ 帳戶為空，無法查詢")
+        return None
+    try:
+        print("📦 呼叫 get_bank_remain() 中...")
+        result = self.sdk.account.get_bank_remain(self.account)
+        print("📦 銀行帳戶回傳：", result)
+
+        if not result.is_success or not result.data:
+            print("❌ 查詢失敗：", result.message)
             return None
-        try:
-            print("📦 呼叫 get_summary() 中...")
-            summary = self.sdk.get_summary(self.account)
-            print("📦 帳務摘要：", summary)
-            return {
-                "balance": summary["available_cash"],
-                "portfolio_value": summary["total_value"],
-                "unrealized_pl": summary["unrealized_profit_loss"]
-            }
-        except Exception as e:
-            print("❌ 查詢帳務失敗：", e)
-            return None
+
+        bank = result.data
+        return {
+            "branch": bank.branch_no,
+            "account": bank.account,
+            "currency": bank.currency,
+            "balance": int(bank.balance),
+            "available": int(bank.available_balance)
+        }
+    except Exception as e:
+        print("❌ 查詢帳務失敗：", e)
+        return None
 
 
 
