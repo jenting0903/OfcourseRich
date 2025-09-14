@@ -68,8 +68,8 @@ def handle_message(event):
 
     # Step 2：背景執行邏輯
     def background_task(user_id, msg):
-    with ApiClient(configuration) as api_client:
-        messaging_api = MessagingApi(api_client)
+        with ApiClient(configuration) as api_client:
+            messaging_api = MessagingApi(api_client)
 
         if msg.startswith("/交易"):
             stock_id = msg.replace("/交易", "").strip()
