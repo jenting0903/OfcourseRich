@@ -3,6 +3,7 @@ from fubon_neo.sdk import FubonSDK
 
 class FubonAdventure:
     def __init__(self):
+        print("🧪 SDK 方法列表：", dir(self.sdk))
         print("🧙‍♂️ 初始化 FubonAdventure 中...")
         self.sdk = FubonSDK()
         try:
@@ -25,7 +26,7 @@ class FubonAdventure:
             return None
         try:
             print("📦 呼叫 get_bank_remain() 中...")
-            result = self.sdk.account.get_bank_remain(self.account)
+            result = self.sdk.get_bank_remain(self.account)
             print("📦 銀行帳戶回傳：", result)
 
             if not result.is_success or not result.data:
@@ -43,6 +44,7 @@ class FubonAdventure:
         except Exception as e:
             print("❌ 查詢帳務失敗：", e)
             return None
+
 
 
 
