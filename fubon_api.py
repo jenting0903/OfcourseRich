@@ -26,7 +26,7 @@ class FubonAdventure:
             return None
         try:
             print("📦 呼叫 get_bank_remain() 中...")
-            result = self.sdk.stock.accounting.get_bank_remain(self.account)
+            result = self.sdk.accounting.get_bank_remain(self.account)  # ✅ 正確路徑
             print("📦 銀行帳戶回傳：", result)
 
             if not result.is_success or not result.data:
@@ -43,8 +43,7 @@ class FubonAdventure:
             }
         except Exception as e:
             print("❌ 查詢帳務失敗：", e)
-        return None
-
+            return None
 
 
 
