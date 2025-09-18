@@ -3,9 +3,9 @@ from fubon_neo.sdk import FubonSDK
 
 class FubonAdventure:
     def __init__(self):
-        print("🧪 SDK 方法列表：", dir(self.sdk))
         print("🧙‍♂️ 初始化 FubonAdventure 中...")
-        self.sdk = FubonSDK()
+        self.sdk = FubonSDK()  # ✅ 先建立 SDK 實例
+        print("🧪 SDK 方法列表：", dir(self.sdk))  # ✅ 再印出方法列表
         try:
             print("🔐 嘗試登入中...")
             login_result = self.sdk.login(
