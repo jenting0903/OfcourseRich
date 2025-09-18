@@ -25,8 +25,8 @@ class FubonAdventure:
             print("⚠️ 帳戶為空，無法查詢")
             return None
         try:
-            print("📦 呼叫 get_bank_remain() 中...")
-            result = self.sdk.accounting.get_bank_remain(self.account)  # ✅ 正確路徑
+            print("📦 呼叫 bank_remain() 中...")
+            result = self.sdk.accounting.bank_remain(self.account)
             print("📦 銀行帳戶回傳：", result)
 
             if not result.is_success or not result.data:
