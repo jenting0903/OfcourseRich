@@ -5,7 +5,12 @@ def get_sdk():
     登入富邦 API，回傳 SDK 與帳號物件
     """
     sdk = FubonSDK()
-    login_result = sdk.login("F129680202", "blick1111", r"C:\CAFubon\F129680202\F129680202.pfx", "Qazxsw21")
+    login_result = self.sdk.login(
+                os.environ["FUBON_USER_ID"],
+                os.environ["FUBON_PASSWORD"],
+                os.environ["FUBON_CERT_PATH"],
+                os.environ["FUBON_CERT_PASSWORD"]
+            )
     if not login_result.is_success:
         return None, None
     return sdk, login_result.data[0]
@@ -73,9 +78,9 @@ def decide_order_type(price, budget, fee_buffer=50):
     - 否則執行零股
     """
     try:
-        min_lot_cost = price * 100 + fee_buffer
+        min_lot_cost = price * 1000 + fee_buffer
         if budget >= min_lot_cost:
-            quantity = int(budget // (price * 100)) * 100
+            quantity = int(budget // (price * 1000)) * 1000
             return "lot", quantity
         else:
             quantity = int(budget // price)
