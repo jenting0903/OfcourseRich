@@ -6,7 +6,8 @@ from linebot.v3.messaging import (
     ReplyMessageRequest, TextMessage, PushMessageRequest
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from fubon_api import get_sdk, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order, place_order
+from fubon_api import get_sdk, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order
+
 from trade_logic import format_preview
 from indicator import get_kline, check_golden_cross
 import threading

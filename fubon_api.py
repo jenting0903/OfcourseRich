@@ -2,6 +2,7 @@ import os
 from fubon_neo.sdk import FubonSDK
 from fubon_neo.constant import BSAction, MarketType, PriceType, TimeInForce, OrderType
 
+
 def get_sdk():
     sdk = FubonSDK()
     login_result = sdk.login(
