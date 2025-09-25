@@ -52,7 +52,7 @@ def build_odd_lot_order(stock_id, price, quantity, sdk):
     )
 
 def execute_order(sdk, account, order):
-    result = sdk.stock.place_order(account, order)
+    result = sdk.stock.execute_order(account, order)
     if not result.is_success:
         raise Exception(f"❌ 下單失敗：{result.message}")
     return result
