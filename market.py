@@ -1,4 +1,6 @@
 from fubon_neo.sdk import FubonSDK
+import os
+
 
 def get_sdk():
     """
@@ -69,21 +71,3 @@ def get_account_info():
         "balance": balance,
         "tradable": tradable
     }
-
-
-def decide_order_type(price, budget, fee_buffer=50):
-    """
-    根據預算與股價，自動判斷是否執行整股或零股交易
-    - 若預算足以買 100 股（含手續費），則執行整股
-    - 否則執行零股
-    """
-    try:
-        min_lot_cost = price * 1000 + fee_buffer
-        if budget >= min_lot_cost:
-            quantity = int(budget // (price * 1000)) * 1000
-            return "lot", quantity
-        else:
-            quantity = int(budget // price)
-            return "odd", quantity
-    except Exception:
-        return "odd", 0

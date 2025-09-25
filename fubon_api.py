@@ -1,6 +1,6 @@
 import os
 from fubon_neo.sdk import FubonSDK, OrderObject
-from fubon_neo.sdk.enums import BSAction, MarketType, PriceType, TimeInForce, OrderType
+from fubon_neo.sdk import BSAction, MarketType, PriceType, TimeInForce, OrderType
 
 def get_sdk():
     sdk = FubonSDK()

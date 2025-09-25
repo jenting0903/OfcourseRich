@@ -3,7 +3,15 @@ from datetime import datetime
 from indicator import get_kline, check_golden_cross
 from trade_logic import execute_order
 from fubon_api import get_sdk, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order
+from linebot.v3.messaging import Configuration, ApiClient, MessagingApi, PushMessageRequest, TextMessage
 
+def reply(user_id, text):
+    config = Configuration(access_token=os.environ["LINE_CHANNEL_ACCESS_TOKEN"])
+    with ApiClient(config) as api_client:
+        messaging_api = MessagingApi(api_client)
+        message = TextMessage(text=text)
+        push_request = PushMessageRequest(to=user_id, messages=[message])
+        messaging_api.push_message(push_request)
 monitoring_flags = {}
 
 def start_monitoring(user_id, stock_id, name, sdk, account, tradable):
