@@ -1,6 +1,7 @@
 import os
-from fubon_neo.sdk import FubonSDK, OrderObject
-from fubon_neo.sdk import BSAction, MarketType, PriceType, TimeInForce, OrderType
+from fubon_neo.sdk import FubonSDK
+from fubon_neo.constant import BSAction, MarketType, PriceType, TimeInForce, OrderType
+
 
 def get_sdk():
     sdk = FubonSDK()
@@ -11,36 +12,23 @@ def get_sdk():
         os.environ["FUBON_CERT_PASSWORD"]
     )
     if not login_result.is_success:
-        print("❌ 登入失敗：", login_result.message)
-        return None, None
-    return sdk, login_result.data[0]
+        raise Exception(f"❌ 登入失敗：{login_result.message}")
+    return sdk
 
 def get_real_price(stock_id, sdk):
-    quote_result = sdk.quote(stock_id)
-    if not quote_result.is_success:
-        print("❌ 查詢股價失敗：", quote_result.message)
-        return None, None
-    return float(quote_result.data.last_price), quote_result.data.stock_name
+    quote = sdk.stock.get_quote(stock_id)
+    return float(quote["RealTimeQuote"]["CurrentPrice"])
 
 def get_odd_lot_price(stock_id, sdk):
-    quote_result = sdk.quote(stock_id)
-    if not quote_result.is_success:
-        print("❌ 查詢零股五檔失敗：", quote_result.message)
-        return None
-    try:
-        return float(quote_result.data.odd_lot_sell_prices[0])
-    except:
-        return float(quote_result.data.last_price)
+    quote = sdk.stock.get_quote(stock_id)
+    return float(quote["OddLotQuote"]["CurrentPrice"])
 
-def get_tradable_balance(account, sdk):
-    balance_result = sdk.accounting.bank_remain(account)
-    if not balance_result.is_success:
-        print("❌ 查詢餘額失敗：", balance_result.message)
-        return 0
-    return int(balance_result.data.available_balance * 0.8)
+def get_tradable_balance(sdk, account):
+    balance = sdk.stock.get_balance(account)
+    return float(balance["AvailableBalance"])
 
-def build_odd_lot_order(stock_id, price, quantity):
-    return OrderObject(
+def build_odd_lot_order(stock_id, price, quantity, sdk):
+    return sdk.stock.build_order_object(
         buy_sell=BSAction.Buy,
         symbol=stock_id,
         price=str(price),
@@ -54,17 +42,6 @@ def build_odd_lot_order(stock_id, price, quantity):
 
 def place_order(sdk, account, order):
     result = sdk.stock.place_order(account, order)
-    if result.is_success:
-        return {
-            "success": True,
-            "order_no": result.data.order_no
-        }
-    else:
-        return {
-            "success": False,
-            "message": result.message
-        }
-
-def cancel_order(sdk, account, order_no):
-    result = sdk.stock.cancel_order(account, order_no)
-    return result.is_success
+    if not result.is_success:
+        raise Exception(f"❌ 下單失敗：{result.message}")
+    return result
