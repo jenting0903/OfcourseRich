@@ -1,6 +1,10 @@
 from fubon_api import (
-    get_sdk, get_real_price, get_odd_lot_price,
-    get_tradable_balance, build_odd_lot_order, place_order
+    get_sdk,
+    get_real_price,
+    get_odd_lot_price,
+    get_tradable_balance,
+    build_odd_lot_order,
+    execute_order  # ✅ 正確名稱
 )
 
 def estimate_quantity(price, budget):
@@ -44,7 +48,7 @@ def format_preview(stock_id, name, price, tradable, quantity):
     )
 
 def execute_order(sdk, account, order):
-    result = place_order(sdk, account, order)
+    result = execute_order(sdk, account, order)
     if result["success"]:
         return f"✅ 已送出委託，委託書號：{result['order_no']}"
     else:
