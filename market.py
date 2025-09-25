@@ -7,12 +7,12 @@ def get_sdk():
     登入富邦 API，回傳 SDK 與帳號物件
     """
     sdk = FubonSDK()
-    login_result = self.sdk.login(
-                os.environ["FUBON_USER_ID"],
-                os.environ["FUBON_PASSWORD"],
-                os.environ["FUBON_CERT_PATH"],
-                os.environ["FUBON_CERT_PASSWORD"]
-            )
+    login_result = sdk.login(
+        os.environ["FUBON_USER_ID"],
+        os.environ["FUBON_PASSWORD"],
+        os.environ["FUBON_CERT_PATH"],
+        os.environ["FUBON_CERT_PASSWORD"]
+    )
     if not login_result.is_success:
         return None, None
     return sdk, login_result.data[0]
