@@ -13,7 +13,8 @@ def get_sdk():
     )
     if not login_result.is_success:
         raise Exception(f"❌ 登入失敗：{login_result.message}")
-    account = sdk.stock.get_account_list()[0]
+    
+    account = sdk.get_account_list()[0]  
     return sdk, account
 
 def get_real_price(stock_id, sdk):
