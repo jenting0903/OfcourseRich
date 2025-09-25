@@ -2,7 +2,6 @@ import os
 from fubon_neo.sdk import FubonSDK
 from fubon_neo.constant import BSAction, MarketType, PriceType, TimeInForce, OrderType
 
-
 def get_sdk():
     sdk = FubonSDK()
     login_result = sdk.login(
@@ -13,9 +12,16 @@ def get_sdk():
     )
     if not login_result.is_success:
         raise Exception(f"❌ 登入失敗：{login_result.message}")
-    
-    account = sdk.get_account_list()[0]  
-    return sdk, account
+    return sdk
+
+def get_account(sdk):
+    try:
+        account_list = sdk.stock.get_account_list()
+        if not account_list:
+            raise Exception("❌ 無法取得交易帳號，請確認憑證與登入資訊")
+        return account_list[0]
+    except Exception as e:
+        raise Exception(f"❌ 帳號取得失敗：{e}")
 
 def get_real_price(stock_id, sdk):
     quote = sdk.stock.get_quote(stock_id)
@@ -26,8 +32,10 @@ def get_odd_lot_price(stock_id, sdk):
     return float(quote["OddLotQuote"]["CurrentPrice"])
 
 def get_tradable_balance(sdk, account):
-    balance = sdk.stock.get_balance(account)
-    return float(balance["AvailableBalance"])
+    result = sdk.accounting.bank_remain(account)
+    if not result.is_success:
+        raise Exception(f"❌ 餘額查詢失敗：{result.message}")
+    return float(result.data["available_balance"])
 
 def build_odd_lot_order(stock_id, price, quantity, sdk):
     return sdk.stock.build_order_object(
@@ -39,10 +47,10 @@ def build_odd_lot_order(stock_id, price, quantity, sdk):
         price_type=PriceType.Limit,
         time_in_force=TimeInForce.ROD,
         order_type=OrderType.Stock,
-        user_def="存股零股"
+        user_def="📥 存股儀式"
     )
 
-def place_order(sdk, account, order):
+def execute_order(sdk, account, order):
     result = sdk.stock.place_order(account, order)
     if not result.is_success:
         raise Exception(f"❌ 下單失敗：{result.message}")
