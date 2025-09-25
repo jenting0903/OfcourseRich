@@ -6,70 +6,47 @@ from linebot.v3.messaging import (
     ReplyMessageRequest, TextMessage, PushMessageRequest
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from fubon_api import FubonAdventure
+from fubon_api import get_sdk, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order, place_order
+from trade_logic import format_preview
+from indicator import get_kline, check_golden_cross
 import threading
+import time
 import os
+from datetime import datetime
 
 app = Flask(__name__)
 
-# ✅ LINE 憑證（Render 上用環境變數設定）
 LINE_CHANNEL_ACCESS_TOKEN = os.environ["LINE_CHANNEL_ACCESS_TOKEN"]
 LINE_CHANNEL_SECRET = os.environ["LINE_CHANNEL_SECRET"]
 
 configuration = Configuration(access_token=LINE_CHANNEL_ACCESS_TOKEN)
 handler = WebhookHandler(LINE_CHANNEL_SECRET)
 
-# ✅ 財務查詢邏輯
-def handle_account_query(user_id):
-    try:
-        print(f"🧙‍♂️ 正在查詢帳務：使用者 {user_id}")
-        fubon = FubonAdventure()
-        info = fubon.query_account()
-        if not info:
-            return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"
+user_state = {}
+monitoring_flags = {}
 
-        return (
-            "🧭 冒險者任庭已成功連結財務神殿...\n"
-            "📜 銀行帳戶卷軸已展開：\n"
-            f"🏛️ 分行代號：{info['branch']}\n"
-            f"🪪 帳號編碼：{info['account']}\n"
-            f"💰 銀袋總額：{info['balance']:,} 金幣\n"
-            f"🪙 可動用資源：{info['available']:,} 金幣\n"
-            f"💱 幣別：{info['currency']}\n"
-                )
-    except Exception as e:
-        print("⚠️ 財務查詢錯誤：", e)
-        return "🔶 銷樣被封印了，可能是憑證失效或帳戶未開啟，請稍後再試。"
-
-# ✅ 推送訊息封裝
 def send_line_message(user_id, text):
     with ApiClient(configuration) as api_client:
         messaging_api = MessagingApi(api_client)
         message = TextMessage(text=text)
         request = PushMessageRequest(to=user_id, messages=[message])
         messaging_api.push_message_with_http_info(request)
-        print(f"📨 已推送訊息給 {user_id}：{text}")
 
-# ✅ webhook 路由
 @app.route("/callback", methods=["POST"])
 def callback():
     signature = request.headers.get("X-Line-Signature", "")
     body = request.get_data(as_text=True)
-
     try:
         handler.handle(body, signature)
     except InvalidSignatureError:
         abort(400)
-
     return "OK"
 
-# ✅ 訊息處理邏輯（先回覆，再執行）
 @handler.add(MessageEvent, message=TextMessageContent)
 def handle_message(event):
     user_id = event.source.user_id
     msg = event.message.text.strip()
 
-    # Step 1：先回覆，避免 webhook timeout
     with ApiClient(configuration) as api_client:
         messaging_api = MessagingApi(api_client)
         messaging_api.reply_message_with_http_info(
@@ -79,23 +56,70 @@ def handle_message(event):
             )
         )
 
-    # Step 2：背景執行邏輯
-    def background_task(user_id, msg):
-        print(f"🧙‍♂️ 背景任務啟動：{user_id} 說了 {msg}")
-        if msg.startswith("/交易"):
-            stock_id = msg.replace("/交易", "").strip()
-            result = monitor_and_trade(stock_id)  # 你自己的交易函式
-            reply = f"✅ 交易完成：{result}"
-        elif msg == "/查詢帳務":
-            reply = handle_account_query(user_id)
-        else:
-            reply = f"📩 你說的是：{msg}"
+    def background_task():
+        if msg == "/開始存股":
+            user_state[user_id] = {"step": "await_stock_id"}
+            send_line_message(user_id, "📥 請輸入股票代號：")
 
-        send_line_message(user_id, reply)
+        elif user_state.get(user_id, {}).get("step") == "await_stock_id":
+            stock_id = msg
+            sdk, account = get_sdk()
+            price = get_odd_lot_price(stock_id, sdk)
+            name = get_real_price(stock_id, sdk)[1]
+            tradable = get_tradable_balance(account, sdk)
+            quantity = int(tradable // price)
+            preview = format_preview(stock_id, name, price, tradable, quantity)
+            user_state[user_id] = {
+                "step": "confirm_order",
+                "stock_id": stock_id,
+                "name": name,
+                "sdk": sdk,
+                "account": account,
+                "price": price,
+                "quantity": quantity,
+                "tradable": tradable
+            }
+            send_line_message(user_id, preview)
 
-    threading.Thread(target=background_task, args=(user_id, msg)).start()
+        elif user_state.get(user_id, {}).get("step") == "confirm_order":
+            if msg == "是":
+                send_line_message(user_id, "🧙‍♂️ 儀式啟動：開始偵測……")
+                data = user_state[user_id]
+                threading.Thread(target=start_monitoring, args=(
+                    user_id, data["stock_id"], data["name"], data["sdk"], data["account"], data["tradable"]
+                )).start()
+            else:
+                user_state[user_id] = {"step": "await_stock_id"}
+                send_line_message(user_id, "📥 請重新輸入股票代號：")
 
-# ✅ Render 雲端啟動用
+        elif msg == "/停止存股":
+            monitoring_flags[user_id] = False
+            send_line_message(user_id, "🛑 今日未能交易，明日再接再厲")
+
+    threading.Thread(target=background_task).start()
+
+def start_monitoring(user_id, stock_id, name, sdk, account, tradable):
+    monitoring_flags[user_id] = True
+    while monitoring_flags.get(user_id):
+        now = datetime.now()
+        if now.hour == 13 and now.minute >= 29:
+            send_line_message(user_id, f"📭 今日未能交易，明日再接再厲\n🔹 股票代號：{stock_id}\n🔹 股票名稱：{name}\n🔹 時間：{now.strftime('%H:%M:%S')}")
+            break
+
+        kline_data = get_kline(sdk, stock_id)
+        if check_golden_cross(kline_data):
+            price = get_odd_lot_price(stock_id, sdk)
+            quantity = int(tradable // price)
+            order = build_odd_lot_order(stock_id, price, quantity)
+            result = place_order(sdk, account, order)
+            if result["success"]:
+                send_line_message(user_id, f"✅ 已達成條件並下單\n🔹 股票代號：{stock_id}\n🔹 股票名稱：{name}\n🔹 下單價格：{price}\n🔹 下單股數：{quantity}\n🔹 下單時間：{now.strftime('%H:%M:%S')}")
+            else:
+                send_line_message(user_id, f"❌ 下單失敗：{result['message']}")
+            break
+
+        time.sleep(2.5)
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
