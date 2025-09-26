@@ -14,16 +14,17 @@ def get_sdk():
     if not login_result.is_success:
             raise Exception(...)
     account = sdk.stock.get_account_list()[0]
-    return sdk, account
+    return sdk
 
 def get_account(sdk):
-    try:
-        account_list = sdk.stock.get_account_list()
-        if not account_list:
-            raise Exception("❌ 無法取得交易帳號，請確認憑證與登入資訊")
-        return account_list[0]
-    except Exception as e:
-        raise Exception(f"❌ 帳號取得失敗：{e}")
+    print("🧪 sdk.stock 類型：", type(sdk.stock))
+    print("🧪 sdk.stock 方法：", dir(sdk.stock))
+
+    account_list = sdk.stock.get_account_list()
+    if not account_list:
+        raise Exception("❌ 無法取得交易帳號")
+    return account_list[0]
+
 
 def get_real_price(stock_id, sdk):
     quote = sdk.stock.get_quote(stock_id)
