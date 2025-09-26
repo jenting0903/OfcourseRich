@@ -6,7 +6,8 @@ from linebot.v3.messaging import (
     ReplyMessageRequest, TextMessage, PushMessageRequest
 )
 from linebot.v3.webhooks import MessageEvent, TextMessageContent
-from fubon_api import get_sdk, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order
+from fubon_api import get_sdk, get_account, get_real_price, get_odd_lot_price, get_tradable_balance, build_odd_lot_order, execute_order
+
 
 from trade_logic import format_preview
 from indicator import get_kline, check_golden_cross
@@ -64,7 +65,8 @@ def handle_message(event):
 
         elif user_state.get(user_id, {}).get("step") == "await_stock_id":
             stock_id = msg
-            sdk, account = get_sdk()
+            sdk = get_sdk()
+            account = get_account(sdk)
             price = get_odd_lot_price(stock_id, sdk)
             name = get_real_price(stock_id, sdk)[1]
             tradable = get_tradable_balance(account, sdk)
@@ -112,7 +114,7 @@ def start_monitoring(user_id, stock_id, name, sdk, account, tradable):
             price = get_odd_lot_price(stock_id, sdk)
             quantity = int(tradable // price)
             order = build_odd_lot_order(stock_id, price, quantity)
-            result = place_order(sdk, account, order)
+            result = execute_order(sdk, account, order)
             if result["success"]:
                 send_line_message(user_id, f"✅ 已達成條件並下單\n🔹 股票代號：{stock_id}\n🔹 股票名稱：{name}\n🔹 下單價格：{price}\n🔹 下單股數：{quantity}\n🔹 下單時間：{now.strftime('%H:%M:%S')}")
             else:
