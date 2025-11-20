@@ -4,7 +4,7 @@ from fubon_api import (
     get_odd_lot_price,
     get_tradable_balance,
     build_odd_lot_order,
-    execute_order  # ✅ 正確名稱
+    execute_order  
 )
 
 def estimate_quantity(price, budget):
