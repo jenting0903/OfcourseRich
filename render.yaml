@@ -3,13 +3,8 @@ services:
     name: fubon-stock-bot
     env: python
     plan: starter
-
-    build:
-      pythonVersion: 3.11.6
-
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
-
     envVars:
       - key: FUBON_USER_ID
         sync: false
@@ -19,3 +14,6 @@ services:
         sync: false
       - key: FUBON_CERT_PASSWORD
         sync: false
+
+build:
+  pythonVersion: 3.11.6
